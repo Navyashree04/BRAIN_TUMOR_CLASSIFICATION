@@ -12,7 +12,7 @@
 
 ---
 
-## 🧠 ᴏᴠᴇʀᴠɪᴇᴡ
+## ᴏᴠᴇʀᴠɪᴇᴡ
 
 This project classifies brain MRI scans into **4 classes**: glioma, meningioma, pituitary tumour and no tumour. It compares three deep learning models under identical conditions (same split, image size, optimizer and learning rate) and adds **Grad-CAM** heatmaps to every model, so each prediction can be checked visually.
 
@@ -20,7 +20,7 @@ It was my research internship work at **RAPID Center, PES University**, and I pr
 
 ---
 
-## 📊 ʀᴇꜱᴜʟᴛꜱ
+## ʀᴇꜱᴜʟᴛꜱ
 
 | Model | Test accuracy | Epochs | Notebook |
 |:--|:--:|:--:|:--|
@@ -45,27 +45,27 @@ The hybrid model misclassified 6 of 716 test images: 2 glioma ↔ meningioma swa
 
 ---
 
-## 🏗️ ᴍᴇᴛʜᴏᴅ
+## ᴍᴇᴛʜᴏᴅ
 
 ```text
-                 ┌──────────────────────┐
-  MRI scan ─────►│ VGG16 branch         │──► 4096 → 256 ─┐
-  (224×224)  │   └──────────────────────┘                │
-             │   ┌──────────────────────┐                ├─► concat (512-d) ─► classifier ─► 4 classes
-             └──►│ ViT-B/16 branch      │──►  768 → 256 ─┘
-                 └──────────────────────┘
+                 ┌───────────────────────────────┐
+  MRI scan ─────►│ VGG16 conv blocks → avg pool  │──► 512 → 256 ─┐
+  (224×224)  │   └───────────────────────────────┘               │
+             │   ┌───────────────────────────────┐               ├─► concat (512-d) ─► BN → ReLU → Dropout(0.4) → Linear ─► 4 classes
+             └──►│ ViT-B/16 → CLS token          │──► 768 → 256 ─┘
+                 └───────────────────────────────┘
 ```
 
 - **Dataset:** Brain Tumor MRI Dataset, 7,153 images in 4 classes, stratified 80 / 10 / 10 train / validation / test split.
 - **VGG16:** ImageNet-pretrained, fine-tuned for 4 classes. The convolutions capture local texture and edges.
 - **ViT-B/16:** `vit_base_patch16_224` from timm, pretrained and fine-tuned. Self-attention captures global context across the whole scan.
 - **Hybrid:** both branches run in parallel; their 256-d features are concatenated into a 512-d joint embedding.
-- **Training:** 224×224 inputs, batch size 16, AdamW, learning rate 1e-4. The best checkpoint was selected on validation accuracy.
+- **Training:** 224×224 inputs, batch size 16, AdamW (lr 1e-4) with a cosine-annealing schedule, cross-entropy with label smoothing 0.1. Augmentation: horizontal flip, ±10° rotation, light colour jitter. VGG blocks 1–4 frozen, block 5 fine-tuned. The best checkpoint was selected on validation accuracy.
 - **Explainability:** Grad-CAM heatmaps for all three models, plus an ablation study measuring each hybrid branch's contribution.
 
 ---
 
-## 🚀 ʜᴏᴡ ᴛᴏ ʀᴜɴ
+## ʜᴏᴡ ᴛᴏ ʀᴜɴ
 
 ```bash
 # 1. Open any notebook in Google Colab and select a GPU runtime
@@ -78,7 +78,7 @@ The hybrid model misclassified 6 of 716 test images: 2 glioma ↔ meningioma swa
 
 ---
 
-## 📁 ʀᴇᴘᴏꜱɪᴛᴏʀʏ
+## ʀᴇᴘᴏꜱɪᴛᴏʀʏ
 
 ```text
 ├── VGG16_ViT_Hybrid_BrainTumor(7153).ipynb   # proposed hybrid model
